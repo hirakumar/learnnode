@@ -1,0 +1,47 @@
+<h1>Sign Up </h1>
+{{! This is super comment of handlebar }}
+<!-- this is html comment -->
+<form class="form" id="signupForm" method="post">
+  <div class="form-group">
+      <div class="row">
+        <div class="col">
+            <label for="username">Name</label>
+            <input type="text" class="form-control" id="username" placeholder="Enter your username" />
+        </div>
+        <div class="col">
+            <label for="useremail">Email address</label>
+            <input type="email" class="form-control" id="useremail"  placeholder="Enter email">
+        </div>
+        <div class="col">
+            <label for="designation">Designation</label>
+            <select class="form-control" id="designation">
+                {{#each designation }}
+                   <option id="{{id}}"> {{name}} </option>
+                {{/each}}
+             
+            </select>
+
+        </div>
+      </div>
+      <div class="row pt-3">
+        <div class="col">
+            <label for="qualification">Qualification</label>
+            <input type="text" class="form-control" id="qualification" placeholder="Enter your qualification" />
+        </div>
+        <div class="col">
+            <label for="dob">DOB</label>
+            <input type="text" class="form-control" id="dob"  placeholder="Choose date of birth">
+        </div>
+        <div class="col">
+            <label for="citizenID">Citizenship ID</label>
+            <input type="text" class="form-control" id="citizenID" placeholder="Enter your citizenship ID" />
+        </div>
+      </div>
+  </div>
+    
+
+  <div class="form-group pt-2">
+  <button type="submit" class="btn btn-primary">Submit</button>
+  <button type="reset" class="btn btn-dark">Clear</button>
+  </div>
+</form>

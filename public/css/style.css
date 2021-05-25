@@ -1,0 +1,21 @@
+#msgBox .modal-body{
+    min-height: 100px;
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    font-weight:bold;
+}
+/*
+#msgBox .modal-header{
+    border-bottom: none;
+    height: 1px;
+    padding: 10px 10px 0 0;
+}
+
+#msgBox button.close {
+    position: absolute;
+right: 13px;
+top: 5px;
+z-index: 999;
+}*/

@@ -2,8 +2,9 @@ var express = require('express');
 var app = express();
 var bodyparser = require('body-parser');
 var tours = require("./lib/tours.js");
+var data = require("./lib/data.js");
 var formidable = require('formidable');
-
+var credentials = require('./credentials.js')
 
 // View Engine Implemented
 var handlebars = require('express3-handlebars').create(
@@ -34,12 +35,56 @@ app.use(bodyparser.urlencoded({
     extended: true
   }));
 app.use(bodyparser.json())
+app.use(require('cookie-parser')(credentials.cookieSecret));
 
 // Home Page
 app.get('/',function(req,res){
    res.render('home');
 })
 
+// Sign Up
+app.get('/signup',(req,res)=>{   
+    var signupdata = {
+        designation:data.designation
+    }
+    res.render('signup',signupdata);
+})
+
+app.post('/signup',(req,res)=>{
+    console.log("body :", req.body);
+   
+    res.send({
+        status:200,
+        msg:'Sucessfully register user : '+req.body.username
+    })
+})
+app.get('/api/employee',(req,res)=>{
+    console.log("Signed Cookie :", req.signedCookies["signed_monster"]);
+    console.log("Unsigned Cookie :", req.cookies);
+   if(!req.signedCookies["signed_monster"]){
+       res.redirect(302,'/');
+       return false;
+   }
+    res.json({
+        signedCookie : req.signedCookies["signed_monster"] ? req.signedCookies["signed_monster"] : 'sorry',
+        cookies: req.cookies,
+        msg:"this is employee section"
+    });
+})
+app.get('/logout',(req,res)=>{
+    res.clearCookie('monster');
+    res.clearCookie('signed_monster');
+    res.send("User is logout");
+})
+app.post('/api/login',(req,res)=>{
+    res.cookie('monster', 'nom nom');
+    res.cookie('signed_monster', 'signed nom nom',{maxAge: 10000,domain:'localhost',httpOnly:true,signed:true});
+    res.redirect(302,'/dashboard');
+})
+
+app.get('/dashboard',(req,res)=>{
+    res.render('dashboard');
+})
 // About Page
 app.get('/about',(req,res)=>{
   res.render('about',{
