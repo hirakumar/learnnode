@@ -4,7 +4,8 @@ var bodyparser = require('body-parser');
 var tours = require("./lib/tours.js");
 var data = require("./lib/data.js");
 var formidable = require('formidable');
-var credentials = require('./credentials.js')
+var credentials = require('./credentials.js');
+var cookieParse = require('cookie-parser');
 
 // View Engine Implemented
 var handlebars = require('express3-handlebars').create(
@@ -35,7 +36,7 @@ app.use(bodyparser.urlencoded({
     extended: true
   }));
 app.use(bodyparser.json())
-app.use(require('cookie-parser')(credentials.cookieSecret));
+app.use(cookieParse(credentials.cookieSecret));
 
 // Home Page
 app.get('/',function(req,res){
@@ -52,12 +53,15 @@ app.get('/signup',(req,res)=>{
 
 app.post('/signup',(req,res)=>{
     console.log("body :", req.body);
-   
+    
     res.send({
         status:200,
         msg:'Sucessfully register user : '+req.body.username
     })
 })
+function checkCookieID(){
+    
+}
 app.get('/api/employee',(req,res)=>{
     console.log("Signed Cookie :", req.signedCookies["signed_monster"]);
     console.log("Unsigned Cookie :", req.cookies);
@@ -72,18 +76,48 @@ app.get('/api/employee',(req,res)=>{
     });
 })
 app.get('/logout',(req,res)=>{
-    res.clearCookie('monster');
-    res.clearCookie('signed_monster');
+    res.clearCookie('token');
     res.send("User is logout");
 })
+function getToken(obj){
+    var obj = data.users.find((item)=>item.useremail === obj.email && item.password === obj.password);
+    return obj ? obj.token : false;
+}
+function ifValidUser(obj){
+    /*
+    console.log("data :",data);
+    console.log("obj :", obj);
+    */
+    var obj = data.users.find((item)=>item.useremail === obj.email && item.password === obj.password);
+    return obj ? true : false;
+    
+}
 app.post('/api/login',(req,res)=>{
-    res.cookie('monster', 'nom nom');
-    res.cookie('signed_monster', 'signed nom nom',{maxAge: 10000,domain:'localhost',httpOnly:true,signed:true});
-    res.redirect(302,'/dashboard');
+    // Check Authetication
+    console.log("email", req.body.email);
+    console.log("password", req.body.password);
+    var data ={
+        email : req.body.email,
+        password: req.body.password
+    }
+    
+    if(!ifValidUser(data)) {
+        console.log("Redirecting at home",data);
+        res.render("home",{msg:'User name or password is invalid'});
+    }else{
+        var token = getToken(data);
+        res.cookie('token',token,{signed:true,httpOnly:true,sameSite:true})
+        res.redirect(302,'/dashboard');        
+    }
+    
 })
 
 app.get('/dashboard',(req,res)=>{
     res.render('dashboard');
+})
+
+app.get('/employee',(req,res)=>{
+    res.render("employee",{users:data.users});
 })
 // About Page
 app.get('/about',(req,res)=>{
