@@ -3,9 +3,13 @@ var app = express();
 var bodyparser = require('body-parser');
 var tours = require("./lib/tours.js");
 var data = require("./lib/data.js");
-var formidable = require('formidable');
+
 var credentials = require('./credentials.js');
 var cookieParse = require('cookie-parser');
+var query = require('./lib/query.js');
+var route = require('./routes/index.js');
+
+
 
 // View Engine Implemented
 var handlebars = require('express3-handlebars').create(
@@ -38,212 +42,18 @@ app.use(bodyparser.urlencoded({
 app.use(bodyparser.json())
 app.use(cookieParse(credentials.cookieSecret));
 
-// Home Page
-app.get('/',function(req,res){
-   res.render('home');
+
+// Check Route for admin folder to validate Cookie
+var {validateCookie} = require("./lib/cookie");
+app.get("/admin/*",validateCookie,(req,res,next)=>{
+    console.log("Signed Cookie :",req.signedCookies )
+   next();
 })
 
-// Sign Up
-app.get('/signup',(req,res)=>{   
-    var signupdata = {
-        designation:data.designation
-    }
-    res.render('signup',signupdata);
-})
-
-app.post('/signup',(req,res)=>{
-    console.log("body :", req.body);
-    
-    res.send({
-        status:200,
-        msg:'Sucessfully register user : '+req.body.username
-    })
-})
-function checkCookieID(){
-    
-}
-app.get('/api/employee',(req,res)=>{
-    console.log("Signed Cookie :", req.signedCookies["signed_monster"]);
-    console.log("Unsigned Cookie :", req.cookies);
-   if(!req.signedCookies["signed_monster"]){
-       res.redirect(302,'/');
-       return false;
-   }
-    res.json({
-        signedCookie : req.signedCookies["signed_monster"] ? req.signedCookies["signed_monster"] : 'sorry',
-        cookies: req.cookies,
-        msg:"this is employee section"
-    });
-})
-app.get('/logout',(req,res)=>{
-    res.clearCookie('token');
-    res.send("User is logout");
-})
-function getToken(obj){
-    var obj = data.users.find((item)=>item.useremail === obj.email && item.password === obj.password);
-    return obj ? obj.token : false;
-}
-function ifValidUser(obj){
-    /*
-    console.log("data :",data);
-    console.log("obj :", obj);
-    */
-    var obj = data.users.find((item)=>item.useremail === obj.email && item.password === obj.password);
-    return obj ? true : false;
-    
-}
-app.post('/api/login',(req,res)=>{
-    // Check Authetication
-    console.log("email", req.body.email);
-    console.log("password", req.body.password);
-    var data ={
-        email : req.body.email,
-        password: req.body.password
-    }
-    
-    if(!ifValidUser(data)) {
-        console.log("Redirecting at home",data);
-        res.render("home",{msg:'User name or password is invalid'});
-    }else{
-        var token = getToken(data);
-        res.cookie('token',token,{signed:true,httpOnly:true,sameSite:true})
-        res.redirect(302,'/dashboard');        
-    }
-    
-})
-
-app.get('/dashboard',(req,res)=>{
-    res.render('dashboard');
-})
-
-app.get('/employee',(req,res)=>{
-    res.render("employee",{users:data.users});
-})
-// About Page
-app.get('/about',(req,res)=>{
-  res.render('about',{
-      layout:'blogs'
-  });
-})
-
-// Tours
-app.get('/tours',(req,res)=>{
-    res.render('tours',tours);
-})
-
-// Newsletter
-app.get('/newsletter',(req,res)=>{
-    res.render('newsletter',{
-        csrf : '1234654987989248'
-    })
-})
-
-app.post('/newsletter',(req,res)=>{
-   //res.sendStatus(200)
-   res.send({
-       status:200,
-       msg:'Sucessfully send'
-   })
-})
-
-// Newsletter Process
-app.post('/process',(req,res)=>{
-    console.log('Form (from querystring):', req.body);
-    console.log('CSRF token (from hidden form field): ' + req.body._csrf);
-    console.log('Name (from visible form field): ' + req.body.name);
-    console.log('Email (from visible form field): ' + req.body.email);
-    res.sendStatus(200);
-    res.send({
-        msg:"Sucessfully send",
-        status:200
-    })
-})
-
-// Register Contestent
-app.get('/register/contest',(req,res)=>{
-   res.render("reguser");
-})
-app.post('/register/contest',(req,res)=>{
-    console.log("Post : register/contest");
-    
-    var form = new formidable.IncomingForm();
-    /* let formData = new FormData();
-formData.append('username', 'hirakumar');
-formData.append('email', 'value2');
-f
-*/
-form.parse(req,function(err, fields, files){
-    console.log("form parse");
-    if(err) return res.send('some thing error')
-    console.log('received fields:');
-    console.log(fields);
-    console.log('received files:');
-    console.log(files);
-    res.send({
-        msg:'Sucesssfully send form',
-        status:200,
-        data:{
-            fields:fields,
-            files:files
-        }
-
-    });
-})
+route(app);
 
 
- })
-
-// Contact Page
-app.get('/contact',(req,res)=>{   
-    res.send(req.params);
-})
-
-app.get('/thanks',(req,res)=>{
-    res.render('thanks')
-})
-
-app.post('/contact',(req,res)=>{
-    
-    if(Object.keys(req.body).length>0){
-        // Do database stuff        
-        console.log("Sucessfully post query");
-        res.redirect(301,"/thanks")
-
-    }else{
-        res.send("You do not have params");
-    }    
-})
-
-app.post('/login',(req,res)=>{
-    if(!req.header('x-auth-token')){
-        return res.status(400).send('No Token')
-    }
-    if(req.header('x-auth-token') != '123456'){
-        return res.status(401).send('Not authorized');
-    }
-    res.send('Logged in');
-})
-
-app.put('/blog/:id',(req,res)=>{
-    // Do some database stuff\
-    res.json({
-        id:req.params.id,
-        title:req.body.title
-    })
-})
-
-app.delete('/blog/:id',(req,res)=>{
-    // Do some database stuff\
-    res.json({
-        msg:"Blog id : " + req.params.id + " has been deleted"
-    })
-});
-
-app.use(function(req,res){  
-    res.status(500);
-    res.render('500');
-})
-
+// Listening Port
 app.listen(port || 3000,()=>{
 	console.log("Server is started on http://localhost:"+port);
 });

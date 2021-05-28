@@ -6,6 +6,12 @@
     align-items: center;
     font-weight:bold;
 }
+input[type=password]{
+    text-security: disc;
+    -webkit-text-security: disc;
+    -moz-text-security: disc;
+    z-index:-1;
+}
 /*
 #msgBox .modal-header{
     border-bottom: none;
